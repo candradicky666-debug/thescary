@@ -197,8 +197,17 @@
             <!-- Nama -->
             <div class="col-span-2 sm:col-span-2">
               <label class="block text-[11px] font-bold text-slate-600 mb-0.5">Nama Pemesan *</label>
-              <input type="text" id="p_nama" required placeholder="Contoh: Bedul..."
+              <input type="text" id="p_nama" required placeholder="Contoh: Bedul..." oninput="checkExistingCustomerValidation()"
                 class="w-full px-2.5 py-2 bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium">
+              <!-- Alert Duplicate Nama (Strict Block) -->
+              <div id="alertDuplicateNama" class="hidden text-[11px] text-rose-800 font-semibold mt-1 bg-rose-50 p-2 rounded-lg border border-rose-300 shadow-sm">
+                <div class="flex items-center justify-between gap-2">
+                  <div id="alertDuplicateNamaText"></div>
+                  <button type="button" id="alertDuplicateEditBtn" class="bg-rose-600 hover:bg-rose-700 text-white font-bold px-2 py-1 rounded text-[10px] shrink-0 transition flex items-center gap-1 shadow-sm">
+                    ✏️ Edit Pesanan Ini
+                  </button>
+                </div>
+              </div>
             </div>
 
             <!-- Ukuran -->
@@ -219,7 +228,7 @@
             <!-- Tipe (Pendek / Panjang) -->
             <div class="col-span-1">
               <label class="block text-[11px] font-bold text-slate-600 mb-0.5">Tipe *</label>
-              <select id="p_tipe"
+              <select id="p_tipe" onchange="handleTipeChange()"
                 class="w-full px-2.5 py-2 bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 font-bold">
                 <option value="Pendek" selected>Pendek</option>
                 <option value="Panjang">Panjang</option>
@@ -229,7 +238,7 @@
             <!-- Harga -->
             <div class="col-span-1">
               <label class="block text-[11px] font-bold text-slate-600 mb-0.5">Harga (Rp) *</label>
-              <input type="number" id="p_harga" min="0" placeholder="100000" oninput="calculatePenjualanPayment()" required
+              <input type="number" id="p_harga" min="0" placeholder="165000" oninput="calculatePenjualanPayment()" required
                 class="w-full px-2.5 py-2 bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 font-bold">
             </div>
 
@@ -240,21 +249,29 @@
                 class="w-full px-2.5 py-2 bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 font-bold">
             </div>
 
-            <!-- Lunas -->
+            <!-- Status Lunas -->
             <div class="col-span-2 sm:col-span-1">
-              <label class="block text-[11px] font-bold text-slate-600 mb-0.5">Lunas *</label>
-              <select id="p_lunas"
+              <label class="block text-[11px] font-bold text-slate-600 mb-0.5">Status Lunas *</label>
+              <select id="p_lunas" onchange="handleStatusLunasChange(this.value)"
                 class="w-full px-2.5 py-2 bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 font-bold text-amber-700">
                 <option value="Belum Lunas" selected>Belum Lunas</option>
                 <option value="Lunas">Lunas</option>
+                <option value="Free">Free</option>
               </select>
             </div>
 
-            <!-- Tombol Simpan -->
-            <div class="col-span-2 sm:col-span-4 lg:col-span-7 flex flex-wrap items-center justify-between gap-2 pt-1">
-              <span class="text-xs text-slate-500 font-medium">
-                Sisa tagihan: <strong class="text-rose-600 font-bold" id="p_sisaText">Rp 0</strong>
-              </span>
+            <!-- Kolom Free & Tombol Simpan -->
+            <div class="col-span-2 sm:col-span-4 lg:col-span-7 flex flex-wrap items-center justify-between gap-2 pt-1 border-t border-slate-100">
+              <div class="flex items-center gap-3">
+                <label class="inline-flex items-center gap-1.5 cursor-pointer bg-purple-50 hover:bg-purple-100 border border-purple-200 px-3 py-1.5 rounded-lg text-xs font-bold text-purple-700 select-none transition shadow-sm">
+                  <input type="checkbox" id="p_is_free" onchange="toggleFreePenjualan(this.checked)" class="w-4 h-4 text-purple-600 rounded border-purple-300 focus:ring-purple-500">
+                  <span>🎁 Free / Gratis (Harga & DP Rp 0)</span>
+                </label>
+                <span class="text-xs text-slate-500 font-medium">
+                  Sisa tagihan: <strong class="text-rose-600 font-bold" id="p_sisaText">Rp 0</strong>
+                </span>
+              </div>
+
               <button type="submit" id="btnSubmitPenjualan"
                 class="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-bold px-5 py-2.5 rounded-xl text-xs flex items-center justify-center gap-2 shadow-sm transition">
                 <i data-lucide="plus" class="w-4 h-4"></i>
@@ -455,6 +472,8 @@
 
       <form id="formModalEditPenjualan" onsubmit="handleSaveEditPenjualan(event)" class="p-4 space-y-3">
         <input type="hidden" id="edit_p_nomor">
+        <input type="hidden" id="edit_p_waktu">
+        <input type="hidden" id="edit_p_namaAsli">
 
         <!-- Nama -->
         <div>
@@ -480,12 +499,20 @@
           </div>
           <div>
             <label class="block text-xs font-bold text-slate-700 mb-0.5">Tipe *</label>
-            <select id="edit_p_tipe"
+            <select id="edit_p_tipe" onchange="handleModalTipeChange()"
               class="w-full px-2.5 py-2 bg-slate-50 border border-slate-300 rounded-lg focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 font-bold text-sm">
               <option value="Pendek">Pendek</option>
               <option value="Panjang">Panjang</option>
             </select>
           </div>
+        </div>
+
+        <!-- Kolom Free / Gratis di Modal Edit -->
+        <div class="p-2.5 bg-purple-50/70 border border-purple-200 rounded-lg">
+          <label class="inline-flex items-center gap-2 cursor-pointer text-xs font-bold text-purple-800 select-none">
+            <input type="checkbox" id="edit_p_is_free" onchange="toggleModalEditFree(this.checked)" class="w-4 h-4 text-purple-600 rounded border-purple-300 focus:ring-purple-500">
+            <span>🎁 Pesanan Free / Gratis (Harga & DP Rp 0)</span>
+          </label>
         </div>
 
         <!-- Harga & DP -->
@@ -506,10 +533,11 @@
         <div class="p-2.5 bg-slate-50 border border-slate-200 rounded-lg flex items-center justify-between text-xs">
           <div>
             <label class="block text-[11px] font-bold text-slate-500 mb-0.5">Status Lunas:</label>
-            <select id="edit_p_lunas"
+            <select id="edit_p_lunas" onchange="handleModalStatusLunasChange(this.value)"
               class="font-bold bg-white border border-slate-300 rounded-lg px-2 py-1 text-xs focus:outline-none">
               <option value="Belum Lunas">Belum Lunas</option>
               <option value="Lunas">Lunas</option>
+              <option value="Free">Free</option>
             </select>
           </div>
           <div class="text-right">
@@ -626,7 +654,8 @@
 
     // State Sesi & Versi Server
     let serverVersion = localStorage.getItem('apps_script_version') || null;
-    let deletedKeys = JSON.parse(localStorage.getItem('penjualan_deleted_keys') || '[]');
+    localStorage.removeItem('penjualan_deleted_keys');
+    let deletedKeys = [];
 
     // State Sesi / Batch Penjualan
     let currentSesi = localStorage.getItem('penjualan_current_sesi') || 'Penjualan 1';
@@ -642,7 +671,30 @@
 
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('sw.js').catch(err => console.log('SW Fail:', err));
+        navigator.serviceWorker.register('sw.js').then((reg) => {
+          reg.update();
+          reg.onupdatefound = () => {
+            const installingWorker = reg.installing;
+            if (installingWorker) {
+              installingWorker.onstatechange = () => {
+                if (installingWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                  console.log('Update PWA terdeteksi, reload...');
+                  window.location.reload();
+                }
+              };
+            }
+          };
+        }).catch(err => console.log('SW Fail:', err));
+      });
+    }
+
+    function renumberPenjualan() {
+      const sesiCounts = {};
+      dataPenjualan.forEach(item => {
+        const s = item.Sesi || item.Batch || 'Penjualan 1';
+        sesiCounts[s] = (sesiCounts[s] || 0) + 1;
+        item['No'] = sesiCounts[s];
+        item.nomor = sesiCounts[s];
       });
     }
 
@@ -836,20 +888,142 @@
       }, 3000);
     }
 
+    function handleTipeChange() {
+      const isFree = document.getElementById('p_is_free')?.checked;
+      if (!isFree) {
+        const tipe = document.getElementById('p_tipe').value;
+        document.getElementById('p_harga').value = (tipe === 'Panjang') ? 185000 : 165000;
+      }
+      calculatePenjualanPayment();
+    }
+
+    function toggleFreePenjualan(isFree) {
+      const hargaInput = document.getElementById('p_harga');
+      const dpInput = document.getElementById('p_dp');
+      const lunasSelect = document.getElementById('p_lunas');
+      const checkbox = document.getElementById('p_is_free');
+      if (checkbox) checkbox.checked = isFree;
+
+      if (isFree) {
+        hargaInput.value = 0;
+        dpInput.value = 0;
+        hargaInput.disabled = true;
+        dpInput.disabled = true;
+        hargaInput.classList.add('bg-slate-100', 'text-slate-400');
+        dpInput.classList.add('bg-slate-100', 'text-slate-400');
+        lunasSelect.value = "Free";
+      } else {
+        hargaInput.disabled = false;
+        dpInput.disabled = false;
+        hargaInput.classList.remove('bg-slate-100', 'text-slate-400');
+        dpInput.classList.remove('bg-slate-100', 'text-slate-400');
+        const tipe = document.getElementById('p_tipe').value;
+        hargaInput.value = (tipe === 'Panjang') ? 185000 : 165000;
+        dpInput.value = 0;
+        lunasSelect.value = "Belum Lunas";
+      }
+      calculatePenjualanPayment();
+    }
+
+    function handleStatusLunasChange(val) {
+      if (val === "Free" || val === "Gratis") {
+        toggleFreePenjualan(true);
+      } else {
+        if (document.getElementById('p_is_free')?.checked) {
+          toggleFreePenjualan(false);
+        }
+        if (val === "Lunas") {
+          const harga = parseFloat(document.getElementById('p_harga').value) || 0;
+          document.getElementById('p_dp').value = harga;
+        } else if (val === "Belum Lunas") {
+          const harga = parseFloat(document.getElementById('p_harga').value) || 0;
+          const dp = parseFloat(document.getElementById('p_dp').value) || 0;
+          if (dp >= harga && harga > 0) {
+            document.getElementById('p_dp').value = 0;
+          }
+        }
+        calculatePenjualanPayment();
+      }
+    }
+
     function calculatePenjualanPayment() {
+      const isFree = document.getElementById('p_is_free')?.checked;
+      const statusSelect = document.getElementById('p_lunas');
+
+      if (isFree || statusSelect.value === "Free" || statusSelect.value === "Gratis") {
+        document.getElementById('p_sisaText').innerText = "Rp 0 (FREE)";
+        statusSelect.value = "Free";
+        statusSelect.className = "w-full px-2.5 py-2 bg-purple-50 border border-purple-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 font-bold text-purple-700";
+        return;
+      }
+
       const harga = parseFloat(document.getElementById('p_harga').value) || 0;
       const dp = parseFloat(document.getElementById('p_dp').value) || 0;
       const sisa = Math.max(0, harga - dp);
 
       document.getElementById('p_sisaText').innerText = formatRupiah(sisa);
 
-      const statusSelect = document.getElementById('p_lunas');
       if (harga > 0 && dp >= harga) {
         statusSelect.value = "Lunas";
         statusSelect.className = "w-full px-2.5 py-2 bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 font-bold text-emerald-700";
       } else {
         statusSelect.value = "Belum Lunas";
         statusSelect.className = "w-full px-2.5 py-2 bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 font-bold text-amber-700";
+      }
+    }
+
+    function checkExistingCustomerValidation() {
+      const inputEl = document.getElementById('p_nama');
+      const inputVal = (inputEl?.value || '').trim().toLowerCase();
+      const alertBox = document.getElementById('alertDuplicateNama');
+      const alertText = document.getElementById('alertDuplicateNamaText');
+      const alertBtn = document.getElementById('alertDuplicateEditBtn');
+      const btnSubmit = document.getElementById('btnSubmitPenjualan');
+      const btnSubmitText = document.getElementById('btnSubmitPenjualanText');
+
+      if (!inputEl || !alertBox) return;
+
+      if (inputVal.length < 2) {
+        alertBox.classList.add('hidden');
+        inputEl.classList.remove('border-rose-500', 'bg-rose-50', 'text-rose-900', 'focus:ring-rose-500');
+        if (btnSubmit) {
+          btnSubmit.disabled = false;
+          btnSubmit.classList.remove('opacity-50', 'cursor-not-allowed', 'bg-slate-400');
+          btnSubmit.classList.add('bg-blue-600', 'hover:bg-blue-700');
+          if (btnSubmitText) btnSubmitText.innerText = "Simpan ke Tabel Penjualan";
+        }
+        return;
+      }
+
+      const existing = dataPenjualan.find(x => 
+        (x.Sesi || x.Batch || 'Penjualan 1') === currentSesi && 
+        String(x['Nama'] || x.nama || '').trim().toLowerCase() === inputVal
+      );
+
+      if (existing) {
+        const no = existing['No'] || existing.nomor;
+        const namaAsli = existing['Nama'] || existing.nama;
+        alertText.innerHTML = `⛔ <strong>"${namaAsli}" SUDAH TERDAFTAR di No. #${no}!</strong><br><span class="text-[10px] text-rose-600">Nama tidak boleh sama. Silakan edit pesanan #${no} untuk memasukkan DP.</span>`;
+        alertBtn.onclick = () => openModalEditPenjualan(no);
+        alertBox.classList.remove('hidden');
+
+        // Warning border & lock submit
+        inputEl.classList.add('border-rose-500', 'bg-rose-50', 'text-rose-900', 'focus:ring-rose-500');
+        if (btnSubmit) {
+          btnSubmit.disabled = true;
+          btnSubmit.classList.add('opacity-50', 'cursor-not-allowed', 'bg-slate-400');
+          btnSubmit.classList.remove('bg-blue-600', 'hover:bg-blue-700');
+          if (btnSubmitText) btnSubmitText.innerText = "⛔ Nama Sudah Ada (Tidak Bisa Input)";
+        }
+      } else {
+        alertBox.classList.add('hidden');
+        inputEl.classList.remove('border-rose-500', 'bg-rose-50', 'text-rose-900', 'focus:ring-rose-500');
+        if (btnSubmit) {
+          btnSubmit.disabled = false;
+          btnSubmit.classList.remove('opacity-50', 'cursor-not-allowed', 'bg-slate-400');
+          btnSubmit.classList.add('bg-blue-600', 'hover:bg-blue-700');
+          if (btnSubmitText) btnSubmitText.innerText = "Simpan ke Tabel Penjualan";
+        }
       }
     }
 
@@ -862,9 +1036,24 @@
       const nama = document.getElementById('p_nama').value.trim();
       const ukuran = document.getElementById('p_ukuran').value;
       const tipe = document.getElementById('p_tipe').value;
-      const harga = parseFloat(document.getElementById('p_harga').value) || 0;
-      const dp = parseFloat(document.getElementById('p_dp').value) || 0;
-      const statusLunas = document.getElementById('p_lunas').value;
+      const isFree = document.getElementById('p_is_free')?.checked || 
+                     document.getElementById('p_lunas').value === 'Free' || 
+                     document.getElementById('p_lunas').value === 'Gratis';
+      const harga = isFree ? 0 : (parseFloat(document.getElementById('p_harga').value) || 0);
+      const dp = isFree ? 0 : (parseFloat(document.getElementById('p_dp').value) || 0);
+      const statusLunas = isFree ? "Free" : document.getElementById('p_lunas').value;
+
+      // Validasi ketat nama ganda: DILARANG INPUT jika nama sudah ada
+      const existingCustomer = dataPenjualan.find(x => 
+        (x.Sesi || x.Batch || 'Penjualan 1') === currentSesi && 
+        String(x['Nama'] || x.nama || '').trim().toLowerCase() === nama.toLowerCase()
+      );
+      if (existingCustomer) {
+        const noExist = existingCustomer['No'] || existingCustomer.nomor;
+        alert(`⛔ GAGAL MENYIMPAN!\n\nNama "${nama}" SUDAH TERDAFTAR di No. #${noExist}.\nSistem TIDAK MENGIZINKAN nama yang sama.\n\nJika ingin memasukkan DP atau mengubah data ${nama}, silakan klik OK untuk langsung membuka formulir edit pesanan No. #${noExist}.`);
+        openModalEditPenjualan(noExist);
+        return;
+      }
 
       // Hitung nomor urut di sesi ini
       const currentSesiOrders = dataPenjualan.filter(x => (x.Sesi || x.Batch || 'Penjualan 1') === currentSesi);
@@ -880,7 +1069,8 @@
         harga: harga,
         dp: dp,
         statusLunas: statusLunas,
-        catatan: "-",
+        isFree: isFree,
+        catatan: isFree ? "Free/Gratis" : "-",
         sesi: currentSesi
       };
 
@@ -903,27 +1093,76 @@
         if (result.status === 'success' || response.ok) {
           showToast(`No. ${nomor} ${nama} berhasil disimpan ke ${currentSesi}!`);
           document.getElementById('p_nama').value = '';
-          document.getElementById('p_harga').value = '';
-          document.getElementById('p_dp').value = '';
-          calculatePenjualanPayment();
-          setTimeout(refreshData, 1000);
+          document.getElementById('p_is_free').checked = false;
+          toggleFreePenjualan(false);
+          checkExistingCustomerValidation();
+
+          // Masukkan ke state lokal segera agar bisa langsung diedit tanpa jeda 1 detik
+          const newItem = {
+            'No': nomor,
+            nomor: nomor,
+            'Waktu': payload.waktu,
+            waktu: payload.waktu,
+            'Nama': nama,
+            nama: nama,
+            'Ukuran': ukuran,
+            ukuran: ukuran,
+            'Tipe': tipe,
+            tipe: tipe,
+            'Harga': payload.harga,
+            harga: payload.harga,
+            'DP': payload.dp,
+            dp: payload.dp,
+            'Sisa': Math.max(0, payload.harga - payload.dp),
+            'Status Lunas': payload.statusLunas,
+            statusLunas: payload.statusLunas,
+            'Catatan': payload.catatan,
+            catatan: payload.catatan,
+            'Sesi': currentSesi
+          };
+          const existingIdx = dataPenjualan.findIndex(x => (x.Sesi || x.Batch || 'Penjualan 1') === currentSesi && String(x['Nama'] || x.nama || '').trim().toLowerCase() === nama.toLowerCase());
+          if (existingIdx === -1) {
+            dataPenjualan.push(newItem);
+            renumberPenjualan();
+            renderTabelPenjualan();
+            updatePenjualanStats();
+          }
+
+          setTimeout(refreshData, 1200);
         } else {
-          throw new Error('Gagal simpan');
+          throw new Error(result.message || 'Gagal simpan');
         }
       } catch (err) {
         console.error('Error post:', err);
-        showToast('Data masuk tabel sementara', true);
-        dataPenjualan.push({
-          'No': nomor,
-          'Nama': nama,
-          'Ukuran': ukuran,
-          'Tipe': tipe,
-          'Harga': harga,
-          'DP': dp,
-          'Status Lunas': statusLunas,
-          'Sesi': currentSesi
-        });
+        showToast(err.message || 'Data masuk tabel sementara', true);
+        const existingIdx = dataPenjualan.findIndex(x => (x.Sesi || x.Batch || 'Penjualan 1') === currentSesi && String(x['Nama'] || x.nama || '').trim().toLowerCase() === nama.toLowerCase());
+        if (existingIdx === -1) {
+          dataPenjualan.push({
+            'No': nomor,
+            nomor: nomor,
+            'Waktu': new Date().toISOString(),
+            waktu: new Date().toISOString(),
+            'Nama': nama,
+            nama: nama,
+            'Ukuran': ukuran,
+            ukuran: ukuran,
+            'Tipe': tipe,
+            tipe: tipe,
+            'Harga': harga,
+            harga: harga,
+            'DP': dp,
+            dp: dp,
+            'Sisa': Math.max(0, harga - dp),
+            sisa: Math.max(0, harga - dp),
+            'Status Lunas': statusLunas,
+            statusLunas: statusLunas,
+            'Catatan': isFree ? "Free/Gratis" : "-",
+            catatan: isFree ? "Free/Gratis" : "-",
+            'Sesi': currentSesi
+          });
+        }
         sortPenjualanAscending();
+        renumberPenjualan();
         renderTabelPenjualan();
         updatePenjualanStats();
       } finally {
@@ -933,6 +1172,11 @@
       }
     }
 
+    function handleTableRowClick(event, no) {
+      if (event.target.closest('button') || event.target.closest('a')) return;
+      openModalEditPenjualan(no);
+    }
+
     function renderTabelPenjualan() {
       const tbody = document.getElementById('bodyTabelPenjualan');
       const searchQuery = (document.getElementById('searchPenjualan')?.value || '').toLowerCase();
@@ -940,7 +1184,26 @@
       // Filter berdasarkan Sesi saat ini
       const currentSesiOrders = dataPenjualan.filter(x => (x.Sesi || x.Batch || 'Penjualan 1') === currentSesi);
 
-      const filtered = currentSesiOrders.filter(item => {
+      // DEDUPLIKASI KETAT PADA TAMPILAN (DOUBLE PROTECTION):
+      // Menjamin nama yang sama tidak pernah muncul dua kali di tabel aplikasi
+      const seenNamesInTable = new Set();
+      const uniqueOrders = [];
+      currentSesiOrders.forEach(item => {
+        const cleanName = String(item['Nama'] || item.nama || '').trim().toLowerCase();
+        if (!cleanName || cleanName === '-') return;
+        if (!seenNamesInTable.has(cleanName)) {
+          seenNamesInTable.add(cleanName);
+          uniqueOrders.push(item);
+        }
+      });
+
+      // Pastikan nomor urut 1, 2, 3... selalu akurat dan berurutan
+      uniqueOrders.forEach((item, idx) => {
+        item['No'] = idx + 1;
+        item.nomor = idx + 1;
+      });
+
+      const filtered = uniqueOrders.filter(item => {
         const nama = String(item['Nama'] || item.nama || '').toLowerCase();
         const ukuran = String(item['Ukuran'] || item.ukuran || '').toLowerCase();
         const tipe = String(item['Tipe'] || item.tipe || '').toLowerCase();
@@ -974,32 +1237,45 @@
         const dp = Number(item['DP'] || item.dp || 0);
         const sisa = Math.max(0, harga - dp);
         const status = String(item['Status Lunas'] || item.statusLunas || (dp >= harga ? 'Lunas' : 'Belum Lunas'));
+        const isFree = status.toLowerCase() === 'gratis' || status.toLowerCase() === 'free' || (harga === 0 && dp === 0);
         const isLunas = status.toLowerCase() === 'lunas' || (dp >= harga && harga > 0);
 
         const tipeBadge = tipe.toLowerCase() === 'panjang'
           ? '<span class="bg-purple-100 text-purple-800 font-bold px-2 py-0.5 rounded text-[11px]">Panjang</span>'
           : '<span class="bg-blue-100 text-blue-800 font-bold px-2 py-0.5 rounded text-[11px]">Pendek</span>';
 
-        const lunasBadge = isLunas
-          ? '<span class="bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full text-[11px]">Lunas</span>'
-          : '<span class="bg-amber-100 text-amber-800 font-bold px-2 py-0.5 rounded-full text-[11px]">Belum Lunas</span>';
+        let lunasBadge = '';
+        if (isFree) {
+          lunasBadge = '<span class="bg-purple-100 text-purple-800 font-bold px-2 py-0.5 rounded-full text-[11px] border border-purple-200">🎁 Free</span>';
+        } else if (isLunas) {
+          lunasBadge = '<span class="bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full text-[11px]">Lunas</span>';
+        } else {
+          lunasBadge = '<span class="bg-amber-100 text-amber-800 font-bold px-2 py-0.5 rounded-full text-[11px]">Belum Lunas</span>';
+        }
 
         const safeNama = nama.replace(/'/g, "\\'");
 
+        const hargaDisplay = isFree
+          ? `<span class="text-purple-700 font-black">Rp 0</span> <span class="bg-purple-100 text-purple-800 text-[10px] font-extrabold px-1.5 py-0.5 rounded">FREE</span>`
+          : formatRupiah(harga);
+
+        const dpDisplay = isFree ? `<span class="text-slate-400">Rp 0</span>` : formatRupiah(dp);
+        const sisaDisplay = isFree ? `<span class="text-slate-400 font-semibold">Rp 0</span>` : (sisa > 0 ? `<span class="text-rose-600 font-bold">${formatRupiah(sisa)}</span>` : `<span class="text-slate-400 font-semibold">Rp 0</span>`);
+
         return `
-          <tr class="hover:bg-slate-50 transition">
+          <tr class="hover:bg-blue-50/70 transition cursor-pointer" onclick="handleTableRowClick(event, ${no})" title="Klik baris untuk edit atau masukkan DP pesanan #${no}">
             <td class="py-2 px-3 border-r border-slate-200 text-center font-bold text-slate-700">${no}</td>
             <td class="py-2 px-3 border-r border-slate-200 font-bold text-slate-900">${nama}</td>
             <td class="py-2 px-3 border-r border-slate-200 text-center font-bold text-slate-700">${ukuran}</td>
             <td class="py-2 px-3 border-r border-slate-200 text-center">${tipeBadge}</td>
-            <td class="py-2 px-3 border-r border-slate-200 text-right font-black text-slate-900">${formatRupiah(harga)}</td>
-            <td class="py-2 px-3 border-r border-slate-200 text-right font-bold text-slate-700">${formatRupiah(dp)}</td>
+            <td class="py-2 px-3 border-r border-slate-200 text-right font-black text-slate-900">${hargaDisplay}</td>
+            <td class="py-2 px-3 border-r border-slate-200 text-right font-bold text-slate-700">${dpDisplay}</td>
             <td class="py-2 px-3 border-r border-slate-200 text-center">${lunasBadge}</td>
-            <td class="py-2 px-3 border-r border-slate-200 text-right font-bold ${sisa > 0 ? 'text-rose-600' : 'text-slate-400'}">${formatRupiah(sisa)}</td>
+            <td class="py-2 px-3 border-r border-slate-200 text-right font-bold">${sisaDisplay}</td>
             <td class="py-2 px-2 text-center whitespace-nowrap">
               <div class="flex items-center justify-center gap-1">
                 <button onclick="openModalEditPenjualan(${no})"
-                  class="bg-blue-50 hover:bg-blue-600 text-blue-600 hover:text-white p-1.5 rounded-lg border border-blue-200 transition" title="Edit Pesanan">
+                  class="bg-blue-50 hover:bg-blue-600 text-blue-600 hover:text-white p-1.5 rounded-lg border border-blue-200 transition" title="Edit Pesanan / Isi DP">
                   <i data-lucide="edit-2" class="w-3.5 h-3.5"></i>
                 </button>
                 <button onclick="confirmHapusPenjualan(${no}, '${safeNama}')"
@@ -1016,18 +1292,21 @@
       let totalDp = 0;
       let totalSisa = 0;
       let countLunas = 0;
+      let countFree = 0;
 
       filtered.forEach(item => {
         const h = Number(item['Harga'] || item.harga || 0);
         const d = Number(item['DP'] || item.dp || 0);
         const s = Math.max(0, h - d);
         const st = String(item['Status Lunas'] || item.statusLunas || (d >= h ? 'Lunas' : 'Belum Lunas'));
+        const isFree = st.toLowerCase() === 'gratis' || st.toLowerCase() === 'free' || (h === 0 && d === 0);
         const isLunas = st.toLowerCase() === 'lunas' || (d >= h && h > 0);
 
         totalHarga += h;
         totalDp += d;
-        totalSisa += s;
-        if (isLunas) countLunas++;
+        if (!isFree) totalSisa += s;
+        if (isFree) countFree++;
+        else if (isLunas) countLunas++;
       });
 
       const tfoot = document.getElementById('footTabelPenjualan');
@@ -1040,7 +1319,7 @@
             <td class="py-3 px-3 border-r border-slate-800 text-center text-slate-500">-</td>
             <td class="py-3 px-3 border-r border-slate-800 text-right text-emerald-400 font-black">${formatRupiah(totalHarga)}</td>
             <td class="py-3 px-3 border-r border-slate-800 text-right text-sky-400 font-black">${formatRupiah(totalDp)}</td>
-            <td class="py-3 px-3 border-r border-slate-800 text-center text-emerald-400 font-bold">${countLunas} Lunas</td>
+            <td class="py-3 px-3 border-r border-slate-800 text-center text-emerald-400 font-bold">${countLunas} Lunas${countFree > 0 ? ` (+${countFree} Free)` : ''}</td>
             <td class="py-3 px-3 border-r border-slate-800 text-right font-black ${totalSisa > 0 ? 'text-rose-400' : 'text-slate-400'}">${formatRupiah(totalSisa)}</td>
             <td class="py-3 px-2 text-center text-slate-500">-</td>
           </tr>
@@ -1053,6 +1332,90 @@
     // ============================================================
     // 2. FITUR EDIT & HAPUS PENJUALAN
     // ============================================================
+    function handleModalTipeChange() {
+      const isFree = document.getElementById('edit_p_is_free')?.checked;
+      if (!isFree) {
+        const tipe = document.getElementById('edit_p_tipe').value;
+        document.getElementById('edit_p_harga').value = (tipe === 'Panjang') ? 185000 : 165000;
+      }
+      calculateModalEditPayment();
+    }
+
+    function toggleModalEditFree(isFree) {
+      const hargaInput = document.getElementById('edit_p_harga');
+      const dpInput = document.getElementById('edit_p_dp');
+      const lunasSelect = document.getElementById('edit_p_lunas');
+      const checkbox = document.getElementById('edit_p_is_free');
+      if (checkbox) checkbox.checked = isFree;
+
+      if (isFree) {
+        hargaInput.value = 0;
+        dpInput.value = 0;
+        hargaInput.disabled = true;
+        dpInput.disabled = true;
+        hargaInput.classList.add('bg-slate-100', 'text-slate-400');
+        dpInput.classList.add('bg-slate-100', 'text-slate-400');
+        lunasSelect.value = "Free";
+        lunasSelect.className = "font-bold bg-purple-50 border border-purple-300 text-purple-700 rounded-lg px-2 py-1 text-xs focus:outline-none";
+      } else {
+        hargaInput.disabled = false;
+        dpInput.disabled = false;
+        hargaInput.classList.remove('bg-slate-100', 'text-slate-400');
+        dpInput.classList.remove('bg-slate-100', 'text-slate-400');
+        const tipe = document.getElementById('edit_p_tipe').value;
+        hargaInput.value = (tipe === 'Panjang') ? 185000 : 165000;
+        lunasSelect.value = "Belum Lunas";
+        lunasSelect.className = "font-bold bg-white border border-slate-300 text-amber-700 rounded-lg px-2 py-1 text-xs focus:outline-none";
+      }
+      calculateModalEditPayment();
+    }
+
+    function handleModalStatusLunasChange(val) {
+      if (val === "Free" || val === "Gratis") {
+        toggleModalEditFree(true);
+      } else {
+        if (document.getElementById('edit_p_is_free')?.checked) {
+          toggleModalEditFree(false);
+        }
+        if (val === "Lunas") {
+          const harga = parseFloat(document.getElementById('edit_p_harga').value) || 0;
+          document.getElementById('edit_p_dp').value = harga;
+        } else if (val === "Belum Lunas") {
+          const harga = parseFloat(document.getElementById('edit_p_harga').value) || 0;
+          const dp = parseFloat(document.getElementById('edit_p_dp').value) || 0;
+          if (dp >= harga && harga > 0) {
+            document.getElementById('edit_p_dp').value = 0;
+          }
+        }
+        calculateModalEditPayment();
+      }
+    }
+
+    function calculateModalEditPayment() {
+      const isFree = document.getElementById('edit_p_is_free')?.checked;
+      const statusSelect = document.getElementById('edit_p_lunas');
+
+      if (isFree || statusSelect.value === "Free" || statusSelect.value === "Gratis") {
+        document.getElementById('edit_p_sisaText').innerText = "Rp 0 (FREE)";
+        statusSelect.value = "Free";
+        statusSelect.className = "font-bold bg-purple-50 border border-purple-300 text-purple-700 rounded-lg px-2 py-1 text-xs focus:outline-none";
+        return;
+      }
+
+      const harga = parseFloat(document.getElementById('edit_p_harga').value) || 0;
+      const dp = parseFloat(document.getElementById('edit_p_dp').value) || 0;
+      const sisa = Math.max(0, harga - dp);
+      document.getElementById('edit_p_sisaText').innerText = formatRupiah(sisa);
+
+      if (harga > 0 && dp >= harga) {
+        statusSelect.value = "Lunas";
+        statusSelect.className = "font-bold bg-white border border-slate-300 text-emerald-700 rounded-lg px-2 py-1 text-xs focus:outline-none";
+      } else {
+        statusSelect.value = "Belum Lunas";
+        statusSelect.className = "font-bold bg-white border border-slate-300 text-amber-700 rounded-lg px-2 py-1 text-xs focus:outline-none";
+      }
+    }
+
     function openModalEditPenjualan(no) {
       const item = dataPenjualan.find(x => (x.Sesi || x.Batch || 'Penjualan 1') === currentSesi && Number(x['No'] || x.nomor) === Number(no));
       if (!item) {
@@ -1060,51 +1423,74 @@
         return;
       }
 
+      const itemWaktu = item['Waktu'] || item.waktu || '';
+      const itemNama = item['Nama'] || item.nama || '';
+      const harga = Number(item['Harga'] || item.harga || 0);
+      const dp = Number(item['DP'] || item.dp || 0);
+      const status = String(item['Status Lunas'] || item.statusLunas || 'Belum Lunas');
+      const isFree = status.toLowerCase() === 'gratis' || status.toLowerCase() === 'free' || (harga === 0 && dp === 0);
+
       document.getElementById('edit_p_nomor').value = no;
-      document.getElementById('modalEditTitle').innerText = `Edit Pesanan Nomor #${no} (${currentSesi})`;
-      document.getElementById('edit_p_nama').value = item['Nama'] || item.nama || '';
+      document.getElementById('edit_p_waktu').value = itemWaktu;
+      document.getElementById('edit_p_namaAsli').value = itemNama;
+      document.getElementById('modalEditTitle').innerText = `Edit Pesanan #${no} (${itemNama})`;
+      document.getElementById('edit_p_nama').value = itemNama;
       document.getElementById('edit_p_ukuran').value = item['Ukuran'] || item.ukuran || 'L';
       document.getElementById('edit_p_tipe').value = item['Tipe'] || item.tipe || 'Pendek';
-      document.getElementById('edit_p_harga').value = item['Harga'] || item.harga || 0;
-      document.getElementById('edit_p_dp').value = item['DP'] || item.dp || 0;
-      document.getElementById('edit_p_lunas').value = item['Status Lunas'] || item.statusLunas || 'Belum Lunas';
+      document.getElementById('edit_p_harga').value = harga;
+      document.getElementById('edit_p_dp').value = dp;
+      document.getElementById('edit_p_lunas').value = isFree ? "Free" : status;
+      document.getElementById('edit_p_is_free').checked = isFree;
 
-      calculateModalEditPayment();
+      toggleModalEditFree(isFree);
       document.getElementById('modalEditPenjualan').classList.remove('hidden');
       renderIcons();
+
+      // Auto-focus field DP agar user bisa langsung ketik DP dalam 1 detik!
+      setTimeout(() => {
+        const dpField = document.getElementById('edit_p_dp');
+        if (dpField && !isFree) {
+          dpField.focus();
+          dpField.select();
+        }
+      }, 150);
     }
 
     function closeModalEditPenjualan() {
       document.getElementById('modalEditPenjualan').classList.add('hidden');
     }
 
-    function calculateModalEditPayment() {
-      const harga = parseFloat(document.getElementById('edit_p_harga').value) || 0;
-      const dp = parseFloat(document.getElementById('edit_p_dp').value) || 0;
-      const sisa = Math.max(0, harga - dp);
-      document.getElementById('edit_p_sisaText').innerText = formatRupiah(sisa);
-
-      const statusSelect = document.getElementById('edit_p_lunas');
-      if (harga > 0 && dp >= harga) {
-        statusSelect.value = "Lunas";
-      } else {
-        statusSelect.value = "Belum Lunas";
-      }
-    }
-
     async function handleSaveEditPenjualan(e) {
       e.preventDefault();
       const nomor = Number(document.getElementById('edit_p_nomor').value);
+      const waktu = document.getElementById('edit_p_waktu').value;
+      const namaAsli = document.getElementById('edit_p_namaAsli').value;
       const nama = document.getElementById('edit_p_nama').value.trim();
       const ukuran = document.getElementById('edit_p_ukuran').value;
       const tipe = document.getElementById('edit_p_tipe').value;
-      const harga = parseFloat(document.getElementById('edit_p_harga').value) || 0;
-      const dp = parseFloat(document.getElementById('edit_p_dp').value) || 0;
-      const statusLunas = document.getElementById('edit_p_lunas').value;
+      const isFree = document.getElementById('edit_p_is_free')?.checked || 
+                     document.getElementById('edit_p_lunas').value === 'Free' || 
+                     document.getElementById('edit_p_lunas').value === 'Gratis';
+      const harga = isFree ? 0 : (parseFloat(document.getElementById('edit_p_harga').value) || 0);
+      const dp = isFree ? 0 : (parseFloat(document.getElementById('edit_p_dp').value) || 0);
+      const statusLunas = isFree ? "Free" : document.getElementById('edit_p_lunas').value;
+
+      // Cek apakah mengubah nama ke nama orang lain yang sudah ada di sesi ini
+      const duplicateOther = dataPenjualan.find(x => 
+        (x.Sesi || x.Batch || 'Penjualan 1') === currentSesi && 
+        Number(x['No'] || x.nomor) !== nomor &&
+        String(x['Nama'] || x.nama || '').trim().toLowerCase() === nama.toLowerCase()
+      );
+      if (duplicateOther) {
+        alert(`⛔ Nama "${nama}" sudah dipakai oleh pesanan No. #${duplicateOther['No'] || duplicateOther.nomor}!\nSilakan gunakan nama lain agar tidak dobel.`);
+        return;
+      }
 
       const payload = {
         action: "edit_penjualan",
         nomor: nomor,
+        waktu: waktu,
+        namaAsli: namaAsli,
         sesi: currentSesi,
         nama: nama,
         ukuran: ukuran,
@@ -1112,7 +1498,8 @@
         harga: harga,
         dp: dp,
         statusLunas: statusLunas,
-        catatan: "-"
+        isFree: isFree,
+        catatan: isFree ? "Free/Gratis" : "-"
       };
 
       const btn = document.getElementById('btnSaveEditPenjualan');
@@ -1128,23 +1515,66 @@
           body: JSON.stringify(payload)
         });
 
-        // Update di state lokal
-        const idx = dataPenjualan.findIndex(x => (x.Sesi || x.Batch || 'Penjualan 1') === currentSesi && Number(x['No'] || x.nomor) === nomor);
-        if (idx !== -1) {
-          dataPenjualan[idx]['Nama'] = nama;
-          dataPenjualan[idx]['Ukuran'] = ukuran;
-          dataPenjualan[idx]['Tipe'] = tipe;
-          dataPenjualan[idx]['Harga'] = harga;
-          dataPenjualan[idx]['DP'] = dp;
-          dataPenjualan[idx]['Sisa'] = Math.max(0, harga - dp);
-          dataPenjualan[idx]['Status Lunas'] = statusLunas;
+        let resultJson;
+        try { resultJson = await res.json(); } catch(e) { resultJson = { status: 'success' }; }
+
+        if (resultJson && resultJson.status === 'error') {
+          alert('⛔ GAGAL UPDATE: ' + resultJson.message);
+          return;
         }
 
+        // Update di state lokal & basmi duplikat nama di sesi ini jika ada
+        const targetNamaLower = nama.toLowerCase();
+        const targetAsliLower = (namaAsli || targetNamaLower).toLowerCase();
+        let updatedRecord = false;
+
+        dataPenjualan = dataPenjualan.filter(x => {
+          const s = x.Sesi || x.Batch || 'Penjualan 1';
+          if (s !== currentSesi) return true;
+
+          const xNama = String(x['Nama'] || x.nama || '').trim().toLowerCase();
+          const xNo = Number(x['No'] || x.nomor);
+          const xWaktu = String(x['Waktu'] || x.waktu || '');
+
+          const isMatch = (targetAsliLower && xNama === targetAsliLower) ||
+                          (xNama === targetNamaLower) ||
+                          (waktu && xWaktu === waktu) ||
+                          (xNo === nomor);
+
+          if (isMatch) {
+            if (!updatedRecord) {
+              x['Nama'] = nama;
+              x.nama = nama;
+              x['Ukuran'] = ukuran;
+              x.ukuran = ukuran;
+              x['Tipe'] = tipe;
+              x.tipe = tipe;
+              x['Harga'] = harga;
+              x.harga = harga;
+              x['DP'] = dp;
+              x.dp = dp;
+              x['Sisa'] = Math.max(0, harga - dp);
+              x.sisa = Math.max(0, harga - dp);
+              x['Status Lunas'] = statusLunas;
+              x.statusLunas = statusLunas;
+              x['Catatan'] = isFree ? "Free/Gratis" : "-";
+              x.catatan = isFree ? "Free/Gratis" : "-";
+              updatedRecord = true;
+              return true;
+            } else {
+              // Jika ada entri kembar / dobel, buang dari memori!
+              return false;
+            }
+          }
+          return true;
+        });
+
+        renumberPenjualan();
         renderTabelPenjualan();
         updatePenjualanStats();
         closeModalEditPenjualan();
-        showToast(`Pesanan Nomor #${nomor} (${currentSesi}) berhasil diperbarui!`);
-        setTimeout(refreshData, 1000);
+        showToast(`Pesanan #${nomor} (${nama}) berhasil diperbarui!`);
+        setTimeout(refreshData, 1200);
       } catch (err) {
         console.error('Error edit penjualan:', err);
         showToast('Gagal update ke server, perubahan disimpan lokal', true);
@@ -1222,21 +1652,35 @@
 
     function updatePenjualanStats() {
       const currentOrders = dataPenjualan.filter(x => (x.Sesi || x.Batch || 'Penjualan 1') === currentSesi);
+      const seen = new Set();
+      const uniqueOrders = [];
+      currentOrders.forEach(item => {
+        const nm = String(item['Nama'] || item.nama || '').trim().toLowerCase();
+        if (!nm || nm === '-') return;
+        if (!seen.has(nm)) {
+          seen.add(nm);
+          uniqueOrders.push(item);
+        }
+      });
+
       let lunas = 0;
       let belum = 0;
+      let gratis = 0;
 
-      currentOrders.forEach(item => {
+      uniqueOrders.forEach(item => {
         const dp = Number(item['DP'] || item.dp || 0);
         const harga = Number(item['Harga'] || item.harga || 0);
         const st = String(item['Status Lunas'] || item.statusLunas || '').toLowerCase();
-        if (st === 'lunas' || (dp >= harga && harga > 0)) lunas++;
+        const isFree = st === 'gratis' || st === 'free' || (harga === 0 && dp === 0);
+        if (isFree) gratis++;
+        else if (st === 'lunas' || (dp >= harga && harga > 0)) lunas++;
         else belum++;
       });
 
-      document.getElementById('statTotalOrder').innerText = currentOrders.length;
-      document.getElementById('statTotalLunas').innerText = lunas;
+      document.getElementById('statTotalOrder').innerText = uniqueOrders.length;
+      document.getElementById('statTotalLunas').innerText = gratis > 0 ? `${lunas} (+${gratis} Free)` : lunas;
       document.getElementById('statTotalBelumLunas').innerText = belum;
-      document.getElementById('nextNoBadge').innerText = `No. ${currentOrders.length + 1}`;
+      document.getElementById('nextNoBadge').innerText = `No. ${uniqueOrders.length + 1}`;
     }
 
     // ============================================================
@@ -1466,23 +1910,68 @@
 
           const rawPenjualan = json.penjualan || json.data || [];
           
-          // Bersihkan SEMUA baris dummy/sampah dan baris yang sudah dihapus oleh pengguna
-          dataPenjualan = rawPenjualan.filter(item => {
+          // 1. Bersihkan baris dummy kosong & baris yang sudah dihapus pengguna
+          const validRows = rawPenjualan.filter(item => {
             const nama = String(item['Nama'] || item.nama || '').trim();
             const harga = Number(item['Harga'] || item.harga || 0);
             const dp = Number(item['DP'] || item.dp || 0);
             const waktu = String(item['Waktu'] || item.waktu || '');
 
-            // 1. Abaikan baris dummy kosong (nama '-' atau harga 0 dan dp 0)
-            if (nama === '-' || nama === '') return false;
-            if (harga === 0 && dp === 0) return false;
-
-            // 2. Abaikan baris yang sudah dihapus pengguna
-            const itemKey = `${waktu}_${nama}_${harga}`;
-            if (deletedKeys.includes(itemKey)) return false;
+            // Abaikan baris dummy kosong (nama '-' atau kosong DAN harga 0 dan dp 0)
+            if ((nama === '-' || nama === '') && harga === 0 && dp === 0) return false;
 
             return true;
           });
+
+          // 2. DEDUPLIKASI KETAT PER SESI + NAMA:
+          // Jika ada lebih dari satu baris dengan Sesi & Nama yang sama (akibat edit/network latency),
+          // gabungkan jadi 1 baris dengan mengambil DP tertinggi dan informasi paling mutakhir!
+          const dedupeMap = new Map();
+          validRows.forEach(item => {
+            const s = String(item.Sesi || item.Batch || 'Penjualan 1').trim();
+            const rawNama = String(item['Nama'] || item.nama || '').trim();
+            if (!rawNama || rawNama === '-') return;
+
+            const key = `${s.toLowerCase()}___${rawNama.toLowerCase()}`;
+            const curDp = Number(item['DP'] || item.dp || 0);
+            const curHarga = Number(item['Harga'] || item.harga || 0);
+            const curWaktu = String(item['Waktu'] || item.waktu || '');
+
+            if (!dedupeMap.has(key)) {
+              dedupeMap.set(key, { ...item });
+            } else {
+              const existing = dedupeMap.get(key);
+              const exDp = Number(existing['DP'] || existing.dp || 0);
+              const exHarga = Number(existing['Harga'] || existing.harga || 0);
+              const exWaktu = String(existing['Waktu'] || existing.waktu || '');
+
+              const maxDp = Math.max(exDp, curDp);
+              const bestHarga = (curHarga > 0) ? curHarga : exHarga;
+              // Data lebih baru / DP lebih besar jadi prioritas
+              const merged = (curWaktu >= exWaktu || curDp > exDp) ? { ...existing, ...item } : { ...item, ...existing };
+              merged['DP'] = maxDp;
+              merged.dp = maxDp;
+              merged['Harga'] = bestHarga;
+              merged.harga = bestHarga;
+              merged['Sisa'] = Math.max(0, bestHarga - maxDp);
+              merged.sisa = Math.max(0, bestHarga - maxDp);
+
+              const isFree = merged['Status Lunas'] === 'Free' || merged['Status Lunas'] === 'Gratis' || (bestHarga === 0 && maxDp === 0);
+              if (isFree) {
+                merged['Status Lunas'] = 'Free';
+                merged.statusLunas = 'Free';
+              } else if (bestHarga > 0 && maxDp >= bestHarga) {
+                merged['Status Lunas'] = 'Lunas';
+                merged.statusLunas = 'Lunas';
+              } else {
+                merged['Status Lunas'] = 'Belum Lunas';
+                merged.statusLunas = 'Belum Lunas';
+              }
+              dedupeMap.set(key, merged);
+            }
+          });
+
+          dataPenjualan = Array.from(dedupeMap.values());
 
           // Otomatis bersihkan Google Sheets jika server sudah v2.1
           if (serverVersion === "2.1" && deletedKeys.length > 0) {
@@ -1495,23 +1984,27 @@
 
           dataKasBand = json.kasBand || [];
 
+          // Tandai baris dengan harga 0 dan dp 0 sebagai Free jika belum diset
+          dataPenjualan.forEach(item => {
+            const h = Number(item['Harga'] || item.harga || 0);
+            const d = Number(item['DP'] || item.dp || 0);
+            const st = String(item['Status Lunas'] || item.statusLunas || '');
+            if (h === 0 && d === 0 && (!st || st.toLowerCase() === 'belum lunas')) {
+              item['Status Lunas'] = 'Free';
+              item.statusLunas = 'Free';
+            }
+          });
+
           sortPenjualanAscending();
           sortKasBandAscending();
-
-          // Renumber urut 1, 2, 3... per sesi agar selalu rapi
-          const sesiCounts = {};
-          dataPenjualan.forEach(item => {
-            const s = item.Sesi || item.Batch || 'Penjualan 1';
-            sesiCounts[s] = (sesiCounts[s] || 0) + 1;
-            item['No'] = sesiCounts[s];
-            item.nomor = sesiCounts[s];
-          });
+          renumberPenjualan();
 
           updateSesiDropdown();
           renderTabelPenjualan();
           updatePenjualanStats();
           renderTabelKas();
           updateKasStats();
+          checkExistingCustomerValidation();
         }
       } catch (err) {
         console.warn('Gagal ambil data:', err);
@@ -1525,7 +2018,18 @@
     // ============================================================
     function exportPdfPenjualan() {
       const currentOrders = dataPenjualan.filter(x => (x.Sesi || x.Batch || 'Penjualan 1') === currentSesi);
-      if (!currentOrders || currentOrders.length === 0) {
+      const seenPdf = new Set();
+      const uniqueOrders = [];
+      currentOrders.forEach(item => {
+        const nm = String(item['Nama'] || item.nama || '').trim().toLowerCase();
+        if (!nm || nm === '-') return;
+        if (!seenPdf.has(nm)) {
+          seenPdf.add(nm);
+          uniqueOrders.push(item);
+        }
+      });
+
+      if (!uniqueOrders || uniqueOrders.length === 0) {
         showToast(`Tidak ada data pesanan di ${currentSesi} untuk diekspor`, true);
         return;
       }
@@ -1557,9 +2061,10 @@
       let totalSisa = 0;
       let countLunas = 0;
       let countBelum = 0;
+      let countFree = 0;
 
-      const tableRows = currentOrders.map(item => {
-        const no = item['No'] || item.nomor || '-';
+      const tableRows = uniqueOrders.map((item, idx) => {
+        const no = idx + 1;
         const nama = item['Nama'] || item.nama || '-';
         const ukuran = item['Ukuran'] || item.ukuran || 'L';
         const tipe = item['Tipe'] || item.tipe || 'Pendek';
@@ -1567,23 +2072,33 @@
         const dp = Number(item['DP'] || item.dp || 0);
         const sisa = Math.max(0, harga - dp);
         const st = String(item['Status Lunas'] || item.statusLunas || (dp >= harga ? 'Lunas' : 'Belum Lunas'));
-        const isLunas = st.toLowerCase() === 'lunas' || (dp >= harga && harga > 0);
+        const isFree = st.toLowerCase() === 'gratis' || st.toLowerCase() === 'free' || (harga === 0 && dp === 0);
+        const isLunas = !isFree && (st.toLowerCase() === 'lunas' || (dp >= harga && harga > 0));
 
         totalOmzet += harga;
         totalDp += dp;
-        totalSisa += sisa;
-        if (isLunas) countLunas++;
-        else countBelum++;
+        if (!isFree) totalSisa += sisa;
+
+        let statusText = 'Belum Lunas';
+        if (isFree) {
+          statusText = 'Free';
+          countFree++;
+        } else if (isLunas) {
+          statusText = 'Lunas';
+          countLunas++;
+        } else {
+          countBelum++;
+        }
 
         return [
           no,
           nama,
           ukuran,
           tipe,
-          formatRupiah(harga),
-          formatRupiah(dp),
-          isLunas ? 'Lunas' : 'Belum Lunas',
-          formatRupiah(sisa)
+          isFree ? 'Rp 0 (Free)' : formatRupiah(harga),
+          isFree ? 'Rp 0' : formatRupiah(dp),
+          statusText,
+          isFree ? 'Rp 0' : formatRupiah(sisa)
         ];
       });
 
@@ -1594,27 +2109,27 @@
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(8.5);
       doc.setTextColor(30, 41, 59);
-      doc.text(`Total Order: ${currentOrders.length} pcs`, 18, 31);
+      doc.text(`Total Order: ${uniqueOrders.length} pcs`, 18, 31);
       doc.setTextColor(22, 101, 52);
-      doc.text(`Lunas: ${countLunas}`, 75, 31);
+      doc.text(`Lunas: ${countLunas}${countFree > 0 ? ` (+${countFree} Free)` : ''}`, 70, 31);
       doc.setTextColor(180, 83, 9);
-      doc.text(`Belum Lunas: ${countBelum}`, 120, 31);
+      doc.text(`Belum Lunas: ${countBelum}`, 125, 31);
       doc.setTextColor(2, 132, 199);
       doc.text(`Total Omzet: ${formatRupiah(totalOmzet)}`, 175, 31);
       doc.setTextColor(225, 29, 72);
       doc.text(`Sisa Piutang: ${formatRupiah(totalSisa)}`, 235, 31);
 
       doc.autoTable({
-        head: [['Nomor', 'Nama Pemesan', 'Ukuran', 'Tipe', 'Harga', 'DP', 'Lunas', 'Sisa Tagihan']],
+        head: [['Nomor', 'Nama Pemesan', 'Ukuran', 'Tipe', 'Harga', 'DP', 'Status', 'Sisa Tagihan']],
         body: tableRows,
         foot: [[
           'TOTAL',
-          `${currentOrders.length} Pesanan`,
+          `${uniqueOrders.length} Pesanan`,
           '',
           '',
           formatRupiah(totalOmzet),
           formatRupiah(totalDp),
-          `${countLunas} Lunas`,
+          `${countLunas} Lunas${countFree > 0 ? ` (+${countFree} Free)` : ''}`,
           formatRupiah(totalSisa)
         ]],
         startY: 38,
@@ -1656,6 +2171,9 @@
           if (data.section === 'body' && data.column.index === 6) {
             if (data.cell.raw === 'Lunas') {
               data.cell.styles.textColor = [22, 101, 52];
+              data.cell.styles.fontStyle = 'bold';
+            } else if (data.cell.raw === 'Free' || data.cell.raw === 'Gratis' || String(data.cell.raw).includes('Free') || String(data.cell.raw).includes('Gratis')) {
+              data.cell.styles.textColor = [126, 34, 206];
               data.cell.styles.fontStyle = 'bold';
             } else {
               data.cell.styles.textColor = [180, 83, 9];
@@ -1831,6 +2349,7 @@
     }
 
     window.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('p_harga').value = 165000;
       calculatePenjualanPayment();
       renderIcons();
       refreshData();
